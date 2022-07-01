@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "RSD-initial-data"
+version = "0.0.1"
+description = "Initial data for the RSD deployment"
+authors = [
+    "matthias.ruester@gfz-potsdam.de"
+]
+
+[tool.poetry.dependencies]
+python = ">=3.8; <=3.10"
+postgrest-py = "^0.10.2"
+pyyaml = "^6.0"
+PyJWT = "^2.4.0"
+
+[tool.poetry.dev-dependencies]
+black = "^22.3.0"

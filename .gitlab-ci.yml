@@ -1,0 +1,25 @@
+stages:
+  - test
+  - build
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+test:
+  image: python:3.9-bullseye
+  stage: test
+  before_script:
+    - pip3 install pycodestyle==2.8.0
+    - pip3 install black==22.3.0
+  script:
+    - pycodestyle *.py
+    - black -l 79 --check *.py
+
+build:
+  image: docker/compose:1.25.5
+  stage: build
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build --tag $CI_REGISTRY/id2/hifis/rsd/spotlight-migration .
+    - docker push $CI_REGISTRY/id2/hifis/rsd/spotlight-migration

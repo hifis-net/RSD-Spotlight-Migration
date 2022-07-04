@@ -37,7 +37,7 @@ def get_md_without_front_matter(file):
             if found >= 2:
                 retlines.append(line)
 
-    return "\n".join(retlines)
+    return "".join(retlines)
 
 
 def get_spotlights():

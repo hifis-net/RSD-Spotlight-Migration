@@ -37,7 +37,7 @@ def get_md_without_front_matter(file):
             if found >= 2:
                 retlines.append(line)
 
-    return "\n".join(retlines)
+    return "".join(retlines)
 
 
 def get_spotlights():
@@ -98,6 +98,10 @@ async def slug_to_id(client, slug):
 
 def convert_spotlight_to_software(spotlight):
     name = spotlight.get("name")
+    doi = spotlight.get("doi")
+
+    if doi and not doi.startswith("10."):
+        logging.warning("Spotlight %s: %s is not a valid DOI.", name, doi)
 
     return {
         "slug": name_to_slug(name),
@@ -105,6 +109,7 @@ def convert_spotlight_to_software(spotlight):
         "is_published": True,
         "short_statement": spotlight.get("excerpt", "")[:300],
         "description": spotlight.get("description", ""),
+        "concept_doi": doi,
     }
 
 
@@ -115,6 +120,35 @@ async def remove_spotlight(client, spotlight):
 
     if software_id is not None:
         # remove related entries
+        res = (
+            await client.from_("maintainer_for_software")
+            .delete()
+            .eq("software", software_id)
+            .execute()
+        )
+
+        res = (
+            await client.from_("release")
+            .select("id")
+            .eq("software", software_id)
+            .execute()
+        )
+
+        for rel in res.data:
+            res = (
+                await client.from_("release_content")
+                .delete()
+                .eq("release_id", rel.get("id"))
+                .execute()
+            )
+
+        res = (
+            await client.from_("release")
+            .delete()
+            .eq("software", software_id)
+            .execute()
+        )
+
         res = (
             await client.from_("repository_url")
             .delete()
@@ -171,7 +205,7 @@ async def add_spotlight(client, spotlight):
     logging.info(res.data)
 
 
-async def add_repository_url(client, spotlight):
+async def add_spotlight_urls(client, spotlight):
     name = spotlight.get("name")
     slug = name_to_slug(name)
 
@@ -183,6 +217,9 @@ async def add_repository_url(client, spotlight):
 
     found_github = None
     found_gitlab = None
+    found_webpage = None
+    to_add = None
+    to_update = None
 
     for plat in platforms:
         ptype = plat.get("type")
@@ -191,6 +228,8 @@ async def add_repository_url(client, spotlight):
             found_gitlab = plat.get("link_as")
         if ptype == "github":
             found_github = plat.get("link_as")
+        if ptype == "webpage":
+            found_webpage = plat.get("link_as")
 
     software_id = await slug_to_id(client, slug)
 
@@ -208,15 +247,24 @@ async def add_repository_url(client, spotlight):
             "code_platform": "github",
             "url": found_github,
         }
-    else:
-        # unsupported type -> nothing to add
-        return
 
-    logging.info("Add repository URL for %s", name)
+    if to_add is not None:
+        logging.info("Add repository URL for %s", name)
+        res = await client.from_("repository_url").insert(to_add).execute()
+        logging.info(res.data)
 
-    res = await client.from_("repository_url").insert(to_add).execute()
-
-    logging.info(res.data)
+    if found_webpage is not None:
+        to_update = {
+            "get_started_url": found_webpage,
+        }
+        logging.info("Add get started URL for %s", name)
+        res = (
+            await client.from_("software")
+            .update(to_update)
+            .eq("id", software_id)
+            .execute()
+        )
+        logging.info(res.data)
 
 
 async def add_license(client, spotlight):
@@ -349,6 +397,43 @@ async def add_organisations(client, spotlight):
         logging.info(res.data)
 
 
+async def add_research_field(client, spotlight):
+    research_field = spotlight.get("hgf_research_field")
+
+    if research_field is None or len(research_field) == 0:
+        # no research field specified
+        return
+
+    name = spotlight.get("name")
+    slug = name_to_slug(name)
+    software_id = await slug_to_id(client, slug)
+
+    logging.info("Add research field for %s", name)
+
+    kw_id = await get_id_for_keyword(client, research_field)
+
+    if kw_id is None:
+        logging.info("Adding research field %s" % research_field)
+
+        res = (
+            await client.from_("keyword")
+            .insert({"value": research_field})
+            .execute()
+        )
+
+        logging.info(res.data)
+
+        kw_id = await get_id_for_keyword(client, research_field)
+
+    res = (
+        await client.from_("keyword_for_software")
+        .insert({"software": software_id, "keyword": kw_id})
+        .execute()
+    )
+
+    logging.info(res.data)
+
+
 async def main():
     token = jwt.encode(JWT_PAYLOAD, PGRST_JWT_SECRET, algorithm=JWT_ALGORITHM)
     spotlights = get_spotlights()
@@ -360,9 +445,10 @@ async def main():
             # update existing -> remove first
             await remove_spotlight(client, spot)
             await add_spotlight(client, spot)
-            await add_repository_url(client, spot)
+            await add_spotlight_urls(client, spot)
             await add_license(client, spot)
             await add_keywords(client, spot)
+            await add_research_field(client, spot)
             await add_organisations(client, spot)
 
 

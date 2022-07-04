@@ -121,6 +121,35 @@ async def remove_spotlight(client, spotlight):
     if software_id is not None:
         # remove related entries
         res = (
+            await client.from_("maintainer_for_software")
+            .delete()
+            .eq("software", software_id)
+            .execute()
+        )
+
+        res = (
+            await client.from_("release")
+            .select("id")
+            .eq("software", software_id)
+            .execute()
+        )
+
+        for rel in res.data:
+            res = (
+                await client.from_("release_content")
+                .delete()
+                .eq("release_id", rel.get("id"))
+                .execute()
+            )
+
+        res = (
+            await client.from_("release")
+            .delete()
+            .eq("software", software_id)
+            .execute()
+        )
+
+        res = (
             await client.from_("repository_url")
             .delete()
             .eq("software", software_id)

@@ -15,6 +15,8 @@ import jwt
 import asyncio
 from postgrest import AsyncPostgrestClient
 
+from htmlparser import parser
+
 DEBUG = True
 POSTGREST_URL = os.environ.get("POSTGREST_URL")
 PGRST_JWT_SECRET = os.environ.get("PGRST_JWT_SECRET")
@@ -37,7 +39,12 @@ def get_md_without_front_matter(file):
             if found >= 2:
                 retlines.append(line)
 
-    return "".join(retlines)
+    raw_markdown = "".join(retlines)
+
+    # Parse to remove html tags
+    md_parser = parser.SvHtmlParser()
+    md_parser.feed(raw_markdown)
+    return md_parser.close().to_markdown()
 
 
 def get_spotlights():
@@ -49,6 +56,7 @@ def get_spotlights():
     for file in filtered:
         with open(file, "r") as opened_file:
             try:
+                logging.info("Processing %s", file)
                 # https://stackoverflow.com/a/34727830
                 load_all = yaml.load_all(opened_file, Loader=yaml.FullLoader)
 

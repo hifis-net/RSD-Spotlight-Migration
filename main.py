@@ -248,16 +248,15 @@ async def add_spotlight_urls(client, spotlight):
             "url": found_github,
         }
 
-    if found_webpage is not None:
-        to_update = {
-            "get_started_url": found_webpage,
-        }
-
     if to_add is not None:
         logging.info("Add repository URL for %s", name)
         res = await client.from_("repository_url").insert(to_add).execute()
         logging.info(res.data)
-    if to_update is not None:
+
+    if found_webpage is not None:
+        to_update = {
+            "get_started_url": found_webpage,
+        }
         logging.info("Add get started URL for %s", name)
         res = (
             await client.from_("software")
@@ -266,8 +265,6 @@ async def add_spotlight_urls(client, spotlight):
             .execute()
         )
         logging.info(res.data)
-
-    return
 
 
 async def add_license(client, spotlight):

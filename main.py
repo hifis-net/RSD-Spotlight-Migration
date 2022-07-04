@@ -176,7 +176,7 @@ async def add_spotlight(client, spotlight):
     logging.info(res.data)
 
 
-async def add_repository_url(client, spotlight):
+async def add_spotlight_urls(client, spotlight):
     name = spotlight.get("name")
     slug = name_to_slug(name)
 
@@ -188,6 +188,9 @@ async def add_repository_url(client, spotlight):
 
     found_github = None
     found_gitlab = None
+    found_webpage = None
+    to_add = None
+    to_update = None
 
     for plat in platforms:
         ptype = plat.get("type")
@@ -196,6 +199,8 @@ async def add_repository_url(client, spotlight):
             found_gitlab = plat.get("link_as")
         if ptype == "github":
             found_github = plat.get("link_as")
+        if ptype == "webpage":
+            found_webpage = plat.get("link_as")
 
     software_id = await slug_to_id(client, slug)
 
@@ -213,15 +218,27 @@ async def add_repository_url(client, spotlight):
             "code_platform": "github",
             "url": found_github,
         }
-    else:
-        # unsupported type -> nothing to add
-        return
 
-    logging.info("Add repository URL for %s", name)
+    if found_webpage is not None:
+        to_update = {
+            "get_started_url": found_webpage,
+        }
 
-    res = await client.from_("repository_url").insert(to_add).execute()
+    if to_add is not None:
+        logging.info("Add repository URL for %s", name)
+        res = await client.from_("repository_url").insert(to_add).execute()
+        logging.info(res.data)
+    if to_update is not None:
+        logging.info("Add get started URL for %s", name)
+        res = (
+            await client.from_("software")
+            .update(to_update)
+            .eq("id", software_id)
+            .execute()
+        )
+        logging.info(res.data)
 
-    logging.info(res.data)
+    return
 
 
 async def add_license(client, spotlight):
@@ -402,7 +419,7 @@ async def main():
             # update existing -> remove first
             await remove_spotlight(client, spot)
             await add_spotlight(client, spot)
-            await add_repository_url(client, spot)
+            await add_spotlight_urls(client, spot)
             await add_license(client, spot)
             await add_keywords(client, spot)
             await add_research_field(client, spot)

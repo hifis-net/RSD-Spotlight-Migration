@@ -98,6 +98,10 @@ async def slug_to_id(client, slug):
 
 def convert_spotlight_to_software(spotlight):
     name = spotlight.get("name")
+    doi = spotlight.get("doi")
+
+    if doi and not doi.startswith("10."):
+        logging.warning("Spotlight %s: %s is not a valid DOI.", name, doi)
 
     return {
         "slug": name_to_slug(name),
@@ -105,6 +109,7 @@ def convert_spotlight_to_software(spotlight):
         "is_published": True,
         "short_statement": spotlight.get("excerpt", "")[:300],
         "description": spotlight.get("description", ""),
+        "concept_doi": doi,
     }
 
 

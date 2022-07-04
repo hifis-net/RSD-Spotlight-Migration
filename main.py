@@ -354,6 +354,43 @@ async def add_organisations(client, spotlight):
         logging.info(res.data)
 
 
+async def add_research_field(client, spotlight):
+    research_field = spotlight.get("hgf_research_field")
+
+    if research_field is None or len(research_field) == 0:
+        # no research field specified
+        return
+
+    name = spotlight.get("name")
+    slug = name_to_slug(name)
+    software_id = await slug_to_id(client, slug)
+
+    logging.info("Add research field for %s", name)
+
+    kw_id = await get_id_for_keyword(client, research_field)
+
+    if kw_id is None:
+        logging.info("Adding research field %s" % research_field)
+
+        res = (
+            await client.from_("keyword")
+            .insert({"value": research_field})
+            .execute()
+        )
+
+        logging.info(res.data)
+
+        kw_id = await get_id_for_keyword(client, research_field)
+
+    res = (
+        await client.from_("keyword_for_software")
+        .insert({"software": software_id, "keyword": kw_id})
+        .execute()
+    )
+
+    logging.info(res.data)
+
+
 async def main():
     token = jwt.encode(JWT_PAYLOAD, PGRST_JWT_SECRET, algorithm=JWT_ALGORITHM)
     spotlights = get_spotlights()
@@ -368,6 +405,7 @@ async def main():
             await add_repository_url(client, spot)
             await add_license(client, spot)
             await add_keywords(client, spot)
+            await add_research_field(client, spot)
             await add_organisations(client, spot)
 
 

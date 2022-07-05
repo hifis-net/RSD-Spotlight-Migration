@@ -23,11 +23,6 @@ PGRST_JWT_SECRET = os.environ.get("PGRST_JWT_SECRET")
 JWT_PAYLOAD = {"role": "rsd_admin"}
 JWT_ALGORITHM = "HS256"
 SPOTLIGHTS_DIR = "hifis.net/_spotlights"
-SKIPPED = []
-
-
-class DescriptionTooLongException(Exception):
-    pass
 
 
 def get_md_without_front_matter(file):
@@ -111,18 +106,11 @@ async def slug_to_id(client, slug):
 def convert_spotlight_to_software(spotlight):
     name = spotlight.get("name")
     doi = spotlight.get("doi")
-
     description = spotlight.get("description", "")
-    if len(description) > 10000:
-        logging.error(
-            "Description of %s has more than 10.000 characters. "
-            "Skipping spotlight.",
-            name,
-        )
-        SKIPPED.append([name, "Description has more than 10.000 characters."])
-        raise DescriptionTooLongException("Description too long.")
 
-    payload = {
+    assert len(description) <= 10000
+
+    software = {
         "slug": name_to_slug(name),
         "brand_name": name,
         "is_published": True,
@@ -130,20 +118,22 @@ def convert_spotlight_to_software(spotlight):
         "description": description,
     }
 
-    if doi:
-        if type(doi) == list:
-            logging.warning(
-                "Multiple DOIs are not supported. "
-                "Consider adding %s as project.",
-                name,
-            )
-            doi = None
-        elif not doi.startswith("10."):
-            logging.warning("Spotlight %s: %s is not a valid DOI.", name, doi)
-        else:
-            payload["concept_doi"] = doi
+    if doi is None:
+        # nothing more to do
+        return software
 
-    return payload
+    if type(doi) == list:
+        logging.warning(
+            "Multiple DOIs are not supported. "
+            "Consider adding %s as a project.",
+            name,
+        )
+    elif not doi.startswith("10."):
+        logging.warning("Spotlight %s: %s is not a valid DOI.", name, doi)
+    else:
+        software["concept_doi"] = doi
+
+    return software
 
 
 async def remove_spotlight(client, spotlight):
@@ -470,26 +460,29 @@ async def add_research_field(client, spotlight):
 async def main():
     token = jwt.encode(JWT_PAYLOAD, PGRST_JWT_SECRET, algorithm=JWT_ALGORITHM)
     spotlights = get_spotlights()
+    skipped = []
 
     async with AsyncPostgrestClient(POSTGREST_URL) as client:
         client.auth(token=token)
 
         for spot in spotlights:
-            # update existing -> remove first
-            try:
-                await remove_spotlight(client, spot)
-                await add_spotlight(client, spot)
-                await add_spotlight_urls(client, spot)
-                await add_license(client, spot)
-                await add_keywords(client, spot)
-                await add_research_field(client, spot)
-                await add_organisations(client, spot)
-            except DescriptionTooLongException:
+            # check if spotlight matches our criteria
+            if len(spot.get("description", "")) > 10000:
+                skipped.append([spot.get("name"), "Description too long."])
                 continue
 
-    if len(SKIPPED) > 0:
+            # update existing -> remove first
+            await remove_spotlight(client, spot)
+            await add_spotlight(client, spot)
+            await add_spotlight_urls(client, spot)
+            await add_license(client, spot)
+            await add_keywords(client, spot)
+            await add_research_field(client, spot)
+            await add_organisations(client, spot)
+
+    if len(skipped) > 0:
         print("The following spotlights were skipped:")
-        for name, reason in SKIPPED:
+        for name, reason in skipped:
             print("  %s: %s" % (name, reason))
 
 

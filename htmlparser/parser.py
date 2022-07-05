@@ -105,6 +105,8 @@ class SvHtmlParser(HTMLParser):
     def handle_endtag(self, tag: str) -> None:
         if tag == "a":
             self.inside_a = False
+        elif tag == "b":
+            self.output.append(r"**")
         elif tag == "div":
             self.inside_div = False
         elif tag == "span":
@@ -123,6 +125,8 @@ class SvHtmlParser(HTMLParser):
         if tag == "a":
             self.inside_a = True
             self.output.append(MdLink(attrs))
+        elif tag == "b":
+            self.output.append(r"**")
         elif tag == "br":
             self.output.append("<br>")
         elif tag == "p":

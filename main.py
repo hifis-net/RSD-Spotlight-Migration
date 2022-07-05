@@ -116,7 +116,8 @@ def convert_spotlight_to_software(spotlight):
     description = spotlight.get("description", "")
     if len(description) > 10000:
         logging.error(
-            "Description of %s has more than 10.000 characters. Skipping spotlight.",
+            "Description of %s has more than 10.000 characters. "
+            "Skipping spotlight.",
             name,
         )
         SKIPPED.append([name, "Description has more than 10.000 characters."])
@@ -133,7 +134,8 @@ def convert_spotlight_to_software(spotlight):
     if doi:
         if type(doi) == list:
             logging.warning(
-                "Multiple DOIs are not supported. Consider adding %s as project.",
+                "Multiple DOIs are not supported. "
+                "Consider adding %s as project.",
                 name,
             )
             doi = None

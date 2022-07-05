@@ -40,8 +40,7 @@ def get_md_without_front_matter(file):
         for line in alllines:
             if line.startswith("---"):
                 found += 1
-
-            if found >= 2:
+            elif found >= 2:
                 retlines.append(line)
 
     raw_markdown = "".join(retlines)

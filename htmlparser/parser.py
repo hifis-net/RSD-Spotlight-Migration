@@ -97,6 +97,9 @@ class SvHtmlParser(HTMLParser):
     def handle_data(self, data: str) -> None:
         if self.inside_a:
             self.output[-1].text = data
+        elif self.inside_div and data.isspace():
+            # Do not parse indentation
+            return
         elif self.inside_icon:
             return
         else:

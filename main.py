@@ -25,6 +25,7 @@ JWT_ALGORITHM = "HS256"
 SPOTLIGHTS_DIR = "hifis.net/_spotlights"
 SKIPPED = []
 
+
 class DescriptionTooLongException(Exception):
     pass
 
@@ -114,7 +115,10 @@ def convert_spotlight_to_software(spotlight):
 
     description = spotlight.get("description", "")
     if len(description) > 10000:
-        logging.error("Description of %s has more than 10.000 characters. Skipping spotlight.", name)
+        logging.error(
+            "Description of %s has more than 10.000 characters. Skipping spotlight.",
+            name,
+        )
         SKIPPED.append([name, "Description has more than 10.000 characters."])
         raise DescriptionTooLongException("Description too long.")
 
@@ -128,7 +132,10 @@ def convert_spotlight_to_software(spotlight):
 
     if doi:
         if type(doi) == list:
-            logging.warning("Multiple DOIs are not supported. Consider adding %s as project.", name)
+            logging.warning(
+                "Multiple DOIs are not supported. Consider adding %s as project.",
+                name,
+            )
             doi = None
         elif not doi.startswith("10."):
             logging.warning("Spotlight %s: %s is not a valid DOI.", name, doi)

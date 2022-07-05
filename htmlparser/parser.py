@@ -48,8 +48,8 @@ class MdLink:
 
 class ImageSrcProcessor:
     def __init__(self, src: str) -> None:
-        replacement = r'https://hifis.net/assets/img/'
-        match = r'{{ site.directory.images | relative_url}}'
+        replacement = r"https://hifis.net/assets/img/"
+        match = r"{{ site.directory.images | relative_url}}"
         if src.startswith(match):
             self.src = src.replace(match, replacement)
         else:
@@ -61,6 +61,7 @@ class ImageSrcProcessor:
 
 class MdImage:
     """Class for images"""
+
     def __init__(self, attrs: List) -> None:
         self.alt = ""
         self.src = ""

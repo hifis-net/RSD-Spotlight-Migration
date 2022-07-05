@@ -116,6 +116,8 @@ class SvHtmlParser(HTMLParser):
             if self.inside_italic:
                 self.output.append(r"*")
                 self.inside_italic = False
+            else:
+                self.inside_icon = False
 
     def handle_starttag(self, tag: str, attrs: List) -> None:
         if tag == "a":

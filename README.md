@@ -28,5 +28,5 @@ export POSTGREST_URL=localhost:5432
 export PGRST_JWT_SECRET=abcdef
 
 # add spotlights to RSD database via PostgREST:
-poetry run "$PWD/main.py"
+poetry run ./main.py
 ```

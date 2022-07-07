@@ -15,6 +15,8 @@ import jwt
 import asyncio
 from postgrest import AsyncPostgrestClient
 
+from htmlparser import parser
+
 DEBUG = True
 POSTGREST_URL = os.environ.get("POSTGREST_URL")
 PGRST_JWT_SECRET = os.environ.get("PGRST_JWT_SECRET")
@@ -33,11 +35,15 @@ def get_md_without_front_matter(file):
         for line in alllines:
             if line.startswith("---"):
                 found += 1
-
-            if found >= 2:
+            elif found >= 2:
                 retlines.append(line)
 
-    return "".join(retlines)
+    raw_markdown = "".join(retlines)
+
+    # Parse to remove html tags
+    md_parser = parser.SvHtmlParser()
+    md_parser.feed(raw_markdown)
+    return md_parser.close().to_markdown()
 
 
 def get_spotlights():
@@ -49,6 +55,7 @@ def get_spotlights():
     for file in filtered:
         with open(file, "r") as opened_file:
             try:
+                logging.info("Processing %s", file)
                 # https://stackoverflow.com/a/34727830
                 load_all = yaml.load_all(opened_file, Loader=yaml.FullLoader)
 
@@ -99,18 +106,34 @@ async def slug_to_id(client, slug):
 def convert_spotlight_to_software(spotlight):
     name = spotlight.get("name")
     doi = spotlight.get("doi")
+    description = spotlight.get("description", "")
 
-    if doi and not doi.startswith("10."):
-        logging.warning("Spotlight %s: %s is not a valid DOI.", name, doi)
+    assert len(description) <= 10000
 
-    return {
+    software = {
         "slug": name_to_slug(name),
         "brand_name": name,
         "is_published": True,
         "short_statement": spotlight.get("excerpt", "")[:300],
-        "description": spotlight.get("description", ""),
-        "concept_doi": doi,
+        "description": description,
     }
+
+    if doi is None:
+        # nothing more to do
+        return software
+
+    if type(doi) == list:
+        logging.warning(
+            "Multiple DOIs are not supported. "
+            "Consider adding %s as a project.",
+            name,
+        )
+    elif not doi.startswith("10."):
+        logging.warning("Spotlight %s: %s is not a valid DOI.", name, doi)
+    else:
+        software["concept_doi"] = doi
+
+    return software
 
 
 async def remove_spotlight(client, spotlight):
@@ -437,11 +460,17 @@ async def add_research_field(client, spotlight):
 async def main():
     token = jwt.encode(JWT_PAYLOAD, PGRST_JWT_SECRET, algorithm=JWT_ALGORITHM)
     spotlights = get_spotlights()
+    skipped = []
 
     async with AsyncPostgrestClient(POSTGREST_URL) as client:
         client.auth(token=token)
 
         for spot in spotlights:
+            # check if spotlight matches our criteria
+            if len(spot.get("description", "")) > 10000:
+                skipped.append([spot.get("name"), "Description too long."])
+                continue
+
             # update existing -> remove first
             await remove_spotlight(client, spot)
             await add_spotlight(client, spot)
@@ -450,6 +479,11 @@ async def main():
             await add_keywords(client, spot)
             await add_research_field(client, spot)
             await add_organisations(client, spot)
+
+    if len(skipped) > 0:
+        print("The following spotlights were skipped:")
+        for name, reason in skipped:
+            print("  %s: %s" % (name, reason))
 
 
 if __name__ == "__main__":

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# SPDX-FileCopyrightText: 2022 Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences
+#
+# SPDX-License-Identifier: EUPL-1.2
+
 """
 Migration script for the spotlights from the hifis.net website.
 """

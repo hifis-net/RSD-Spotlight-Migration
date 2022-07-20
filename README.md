@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2022 Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences
+
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # hifis.net Spotlight Migration for RSD
 
 This repository provides a docker image to use in the RSD project to

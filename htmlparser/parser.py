@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2022 Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences
+#
+# SPDX-License-Identifier: EUPL-1.2
+
 # HTML Parser from
 # https://gitlab.hzdr.de/hub-terra/stakeholder-view/-/blob/dev/datahub/stakeholderview/migrations/0015_html_to_md.py
 

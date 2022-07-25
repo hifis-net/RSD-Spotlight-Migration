@@ -64,7 +64,13 @@ def get_md_without_front_matter(file):
     # Parse to remove html tags
     md_parser = parser.SvHtmlParser()
     md_parser.feed(raw_markdown)
-    return md_parser.close().to_markdown()
+
+    md_parsed = md_parser.close().to_markdown()
+
+    # Remove single line breaks which should not be rendered
+    md_final = re.sub(r'(?<=[\w., ])(\n)(?=[\w., ])', ' ', md_parsed)
+
+    return md_final
 
 
 def get_spotlights():

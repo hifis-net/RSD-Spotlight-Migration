@@ -12,6 +12,8 @@ import os
 import re
 import glob
 import logging
+import base64
+import magic
 
 import yaml
 import jwt
@@ -27,6 +29,21 @@ PGRST_JWT_SECRET = os.environ.get("PGRST_JWT_SECRET")
 JWT_PAYLOAD = {"role": "rsd_admin"}
 JWT_ALGORITHM = "HS256"
 SPOTLIGHTS_DIR = "hifis.net/_spotlights"
+
+ORGANISATION_LOGOS = {
+    "Helmholtz Centre for Environmental Research (UFZ)": "UFZ.svg",
+    "Helmholtz Centre Potsdam GFZ German Research Centre for Geosciences": "GFZ.svg",
+    "German Aerospace Center (DLR)": "DLR.svg",
+    "Alfred Wegener Institute for Polar and Marine Research (AWI)": "AWI.svg",
+    "Karlsruhe Institute of Technology (KIT)": "KIT.svg",
+    "CISPA Helmholtz Center for Information Security": "CISPA.png",
+    "Helmholtz Centre for Heavy Ion Research (GSI)": "GSI.svg",
+    "Helmholtz Centre For Ocean Research Kiel (GEOMAR)": "GEOMAR.jpg",
+    "Helmholtz-Zentrum Dresden-Rossendorf (HZDR)": "HZDR.png",
+}
+MISSING_LOGOS = []
+
+mime = magic.Magic(mime=True)
 
 
 def get_md_without_front_matter(file):
@@ -413,6 +430,34 @@ async def add_organisations(client, spotlight):
 
             org_id = await get_id_for_organisation(client, org)
 
+        if not org in ORGANISATION_LOGOS.keys():
+            logging.warn("No logo found for %s" % org)
+            MISSING_LOGOS.append(org)
+        else:
+            logo_db = (
+                await client.from_("logo_for_organisation")
+                .select("*")
+                .eq("organisation", org_id)
+                .execute()
+            )
+            if len(logo_db.data) == 0:
+                logo_filename = f"./resources/logos/{ORGANISATION_LOGOS[org]}"
+                logging.info("Adding logo %s" % logo_filename)
+                with open(logo_filename, "rb") as logo:
+                    logo_base64 = base64.b64encode(logo.read()).decode("utf-8")
+                    mime_type = mime.from_file(logo_filename)
+                    logo_data = {
+                        "organisation": org_id,
+                        "data": logo_base64,
+                        "mime_type": mime_type,
+                    }
+                    res = (
+                        await client.from_("logo_for_organisation")
+                        .insert(logo_data)
+                        .execute()
+                    )
+                    logging.info(res.data)
+
         logging.info("Adding organisation %s to software %s" % (org, name))
 
         res = (
@@ -519,6 +564,10 @@ async def main():
         print("The following spotlights were skipped:")
         for name, reason in skipped:
             print("  %s: %s" % (name, reason))
+    if len(MISSING_LOGOS) > 0:
+        print("There were logos missing of the following organisations:")
+        for org in MISSING_LOGOS:
+            print("  %s" % org)
 
 
 if __name__ == "__main__":

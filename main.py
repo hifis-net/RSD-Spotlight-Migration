@@ -462,7 +462,7 @@ async def add_research_field(client, spotlight):
 
 
 async def process_imprint(client):
-    filename ="./resources/Imprint.md"
+    filename = "./resources/Imprint.md"
     with open(filename, "r") as imprint:
         logging.info("Processing imprint from %s", filename)
 
@@ -474,9 +474,14 @@ async def process_imprint(client):
             "position": 1,
         }
 
-        db_imprint = await client.from_("meta_pages").select("*").eq("slug","imprint").execute()
+        db_imprint = (
+            await client.from_("meta_pages")
+            .select("*")
+            .eq("slug", "imprint")
+            .execute()
+        )
 
-        if (len(db_imprint.data) > 0):
+        if len(db_imprint.data) > 0:
             logging.info("Imprint already exsits. Updating.")
             res = await client.from_("meta_pages").update(data).execute()
         else:

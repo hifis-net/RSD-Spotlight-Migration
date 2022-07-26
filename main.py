@@ -461,6 +461,31 @@ async def add_research_field(client, spotlight):
     logging.info(res.data)
 
 
+async def process_imprint(client):
+    filename ="./resources/Imprint.md"
+    with open(filename, "r") as imprint:
+        logging.info("Processing imprint from %s", filename)
+
+        data = {
+            "slug": "imprint",
+            "title": "Imprint",
+            "description": imprint.read(),
+            "is_published": True,
+            "position": 1,
+        }
+
+        db_imprint = await client.from_("meta_pages").select("*").eq("slug","imprint").execute()
+
+        if (len(db_imprint.data) > 0):
+            logging.info("Imprint already exsits. Updating.")
+            res = await client.from_("meta_pages").update(data).execute()
+        else:
+            logging.info("Imprint not found. Creating.")
+            res = await client.from_("meta_pages").insert(data).execute()
+
+        logging.info(res.data)
+
+
 async def main():
     token = jwt.encode(JWT_PAYLOAD, PGRST_JWT_SECRET, algorithm=JWT_ALGORITHM)
     spotlights = get_spotlights()
@@ -468,6 +493,7 @@ async def main():
 
     async with AsyncPostgrestClient(POSTGREST_URL) as client:
         client.auth(token=token)
+        await process_imprint(client)
 
         for spot in spotlights:
             # check if spotlight matches our criteria

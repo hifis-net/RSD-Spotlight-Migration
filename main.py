@@ -67,10 +67,21 @@ def get_md_without_front_matter(file):
 
     md_parsed = md_parser.close().to_markdown()
 
-    # Remove single line breaks which should not be rendered
-    md_final = re.sub(r'(?<=[\w., ])(\n)(?=[\w., ])', ' ', md_parsed)
+    # Now split by code blocks
+    md_split = md_parsed.split(r"```")
+    if len(md_split) % 2 == 0:
+        raise Exception(
+            "There was an error parsing markdown code blocks in %s" % file
+        )
 
-    return md_final
+    # Remove line breaks inside paragraphs, because they would be rendered as <br>
+    # Only every scond block, because we do not want to replace newlines in code blocks
+    for i in range(0, len(md_split), 2):
+        md_split[i] = re.sub(
+            r"(?<=[\w., \(\)\[\]])(\n)(?=[\w., \(\)\[\]])", " ", md_split[i]
+        )
+
+    return "```".join(md_split)
 
 
 def get_spotlights():

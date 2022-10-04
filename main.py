@@ -432,6 +432,8 @@ async def get_id_for_organisation(client, org):
 
 async def add_organisations(client, spotlight):
     orgs = spotlight.get("hgf_centers")
+    if isinstance(orgs, str):
+        orgs = [orgs]
 
     if orgs is None or len(orgs) == 0:
         # no organisation specified

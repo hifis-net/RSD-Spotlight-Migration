@@ -426,6 +426,20 @@ async def get_id_for_organisation(client, org):
     return None
 
 
+async def organisation_has_logo(client, org) -> bool:
+    org_id = await get_id_for_organisation(client, org)
+    res = (
+        await client.from_("logo_for_organisation")
+        .select("organisation")
+        .eq("organisation", org_id)
+        .execute()
+    )
+    if len(res.data) > 0:
+        return True
+    else:
+        return False
+
+
 async def add_organisations(client, spotlight):
     orgs = spotlight.get("hgf_centers")
     if isinstance(orgs, str):
@@ -459,10 +473,11 @@ async def add_organisations(client, spotlight):
 
             org_id = await get_id_for_organisation(client, org)
 
-        if not org in ORGANISATION_LOGOS.keys():
+        logo_exists = await organisation_has_logo(client, org)
+        if not logo_exists and not org in ORGANISATION_LOGOS.keys():
             logging.warn("No logo found for %s" % org)
             MISSING_LOGOS.append(org)
-        else:
+        elif not logo_exists:
             logo_db = (
                 await client.from_("logo_for_organisation")
                 .select("*")
@@ -565,6 +580,7 @@ async def process_imprint(client):
             logging.info("Imprint not found. Creating.")
             res = await client.from_("meta_pages").insert(data).execute()
         logging.info(res.data)
+
 
 def check_env():
     errors = 0

@@ -22,7 +22,8 @@ import jwt
 import asyncio
 from postgrest import AsyncPostgrestClient
 
-from htmlparser import parser
+from mdparser.mdparser import SvHtmlParser
+
 
 VERBOSE = False
 POSTGREST_URL = os.environ.get("POSTGREST_URL")
@@ -63,7 +64,7 @@ def get_md_without_front_matter(file):
     raw_markdown = "".join(retlines)
 
     # Parse to remove html tags
-    md_parser = parser.SvHtmlParser()
+    md_parser = SvHtmlParser()
     md_parser.feed(raw_markdown)
 
     md_parsed = md_parser.close().to_markdown()

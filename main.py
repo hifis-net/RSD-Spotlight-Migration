@@ -8,6 +8,7 @@
 Migration script for the spotlights from the hifis.net website.
 """
 
+import argparse
 import os
 import re
 import glob
@@ -23,7 +24,7 @@ from postgrest import AsyncPostgrestClient
 
 from htmlparser import parser
 
-DEBUG = True
+VERBOSE = False
 POSTGREST_URL = os.environ.get("POSTGREST_URL")
 PGRST_JWT_SECRET = os.environ.get("PGRST_JWT_SECRET")
 JWT_PAYLOAD = {"role": "rsd_admin"}
@@ -587,8 +588,23 @@ async def main():
             print("  %s" % org)
 
 
+def init_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Migrate Software spotlights from hifis.net to the RSD.",
+        usage="%(prog)s [OPTION]"
+    )
+    parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Increase verbosity."
+    )
+    return parser
+
+
 if __name__ == "__main__":
-    if DEBUG:
+    parser = init_parser()
+    args = parser.parse_args()
+    if args.verbose:
         logging.basicConfig(level=logging.INFO)
     else:
         logging.basicConfig(level=logging.WARN)

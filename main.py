@@ -122,13 +122,9 @@ def name_to_slug(name):
 
 
 def org_name_to_slug(name):
-    return (
-        name.replace("(", "")
-        .replace(")", "")
-        .replace(" ", "-")
-        .replace("+", "")
-        .lower()
-    )
+    name = name.replace(" ", "-").replace("ä", "a").replace("ö", "o").replace("ü", "u").replace("ß", "ss").lower()
+    name = ''.join(char for char in name if (char.isalnum() or char == "-"))
+    return name
 
 
 async def slug_to_id(client, slug):

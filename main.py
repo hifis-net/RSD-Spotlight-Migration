@@ -8,6 +8,7 @@
 Migration script for the spotlights from the hifis.net website.
 """
 
+import argparse
 import os
 import re
 import glob
@@ -21,9 +22,12 @@ import jwt
 import asyncio
 from postgrest import AsyncPostgrestClient
 
-from htmlparser import parser
+from mdparser.mdparser import SvHtmlParser
 
-DEBUG = True
+
+VERBOSE = False
+DELETE_SPOTLIGHTS = False
+UPDATE_IMPRINT = False
 POSTGREST_URL = os.environ.get("POSTGREST_URL")
 PGRST_JWT_SECRET = os.environ.get("PGRST_JWT_SECRET")
 JWT_PAYLOAD = {"role": "rsd_admin"}
@@ -62,7 +66,7 @@ def get_md_without_front_matter(file):
     raw_markdown = "".join(retlines)
 
     # Parse to remove html tags
-    md_parser = parser.SvHtmlParser()
+    md_parser = SvHtmlParser()
     md_parser.feed(raw_markdown)
 
     md_parsed = md_parser.close().to_markdown()
@@ -93,7 +97,7 @@ def get_spotlights():
     for file in filtered:
         with open(file, "r") as opened_file:
             try:
-                logging.info("Processing %s", file)
+                logging.info("Preparing %s", file)
                 # https://stackoverflow.com/a/34727830
                 load_all = yaml.load_all(opened_file, Loader=yaml.FullLoader)
 
@@ -118,13 +122,9 @@ def name_to_slug(name):
 
 
 def org_name_to_slug(name):
-    return (
-        name.replace("(", "")
-        .replace(")", "")
-        .replace(" ", "-")
-        .replace("+", "")
-        .lower()
-    )
+    name = name.replace(" ", "-").replace("ä", "a").replace("ö", "o").replace("ü", "u").replace("ß", "ss").lower()
+    name = ''.join(char for char in name if (char.isalnum() or char == "-"))
+    return name
 
 
 async def slug_to_id(client, slug):
@@ -172,6 +172,16 @@ def convert_spotlight_to_software(spotlight):
         software["concept_doi"] = doi
 
     return software
+
+
+async def spotlight_exists(client, spotlight) -> bool:
+    name = spotlight.get("name")
+    slug = name_to_slug(name)
+    software_id = await slug_to_id(client, slug)
+    if software_id is not None:
+        return True
+    else:
+        return False
 
 
 async def remove_spotlight(client, spotlight):
@@ -416,8 +426,24 @@ async def get_id_for_organisation(client, org):
     return None
 
 
+async def organisation_has_logo(client, org) -> bool:
+    org_id = await get_id_for_organisation(client, org)
+    res = (
+        await client.from_("logo_for_organisation")
+        .select("organisation")
+        .eq("organisation", org_id)
+        .execute()
+    )
+    if len(res.data) > 0:
+        return True
+    else:
+        return False
+
+
 async def add_organisations(client, spotlight):
     orgs = spotlight.get("hgf_centers")
+    if isinstance(orgs, str):
+        orgs = [orgs]
 
     if orgs is None or len(orgs) == 0:
         # no organisation specified
@@ -447,10 +473,11 @@ async def add_organisations(client, spotlight):
 
             org_id = await get_id_for_organisation(client, org)
 
-        if not org in ORGANISATION_LOGOS.keys():
+        logo_exists = await organisation_has_logo(client, org)
+        if not logo_exists and not org in ORGANISATION_LOGOS.keys():
             logging.warn("No logo found for %s" % org)
             MISSING_LOGOS.append(org)
-        else:
+        elif not logo_exists:
             logo_db = (
                 await client.from_("logo_for_organisation")
                 .select("*")
@@ -543,20 +570,38 @@ async def process_imprint(client):
             .execute()
         )
 
-        if len(db_imprint.data) > 0:
+        if len(db_imprint.data) > 0 and not UPDATE_IMPRINT:
+            logging.info("Imprint already exists, but will not be updated.")
+            return
+        elif len(db_imprint.data) > 0 and UPDATE_IMPRINT:
             logging.info("Imprint already exsits. Updating.")
             res = await client.from_("meta_pages").update(data).execute()
         else:
             logging.info("Imprint not found. Creating.")
             res = await client.from_("meta_pages").insert(data).execute()
-
         logging.info(res.data)
 
 
+def check_env():
+    errors = 0
+    if not POSTGREST_URL:
+        errors += 1
+        logging.error("POSTGREST_URL undefined.")
+    if not PGRST_JWT_SECRET:
+        errors += 1
+        logging.error("PGRST_JWT_SECRET undefined.")
+    if errors > 0:
+        raise RuntimeError("Environment variables are missing.")
+    logging.info("Runtime variables checked.")
+
+
+
 async def main():
+    check_env()
     token = jwt.encode(JWT_PAYLOAD, PGRST_JWT_SECRET, algorithm=JWT_ALGORITHM)
     spotlights = get_spotlights()
-    skipped = []
+    skipped_errors = []
+    skipped_no_update = []
 
     async with AsyncPostgrestClient(POSTGREST_URL) as client:
         client.auth(token=token)
@@ -565,11 +610,17 @@ async def main():
         for spot in spotlights:
             # check if spotlight matches our criteria
             if len(spot.get("description", "")) > 10000:
-                skipped.append([spot.get("name"), "Description too long."])
+                skipped_errors.append([spot.get("name"), "Description too long."])
                 continue
 
-            # update existing -> remove first
-            await remove_spotlight(client, spot)
+            already_exists = await spotlight_exists(client, spot)
+            if already_exists and DELETE_SPOTLIGHTS:
+                # update existing -> remove first
+                await remove_spotlight(client, spot)
+            elif already_exists and not DELETE_SPOTLIGHTS:
+                skipped_no_update.append(spot.get("name"))
+                continue
+
             await add_spotlight(client, spot)
             await add_spotlight_urls(client, spot)
             await add_license(client, spot)
@@ -577,9 +628,13 @@ async def main():
             await add_research_field(client, spot)
             await add_organisations(client, spot)
 
-    if len(skipped) > 0:
-        print("The following spotlights were skipped:")
-        for name, reason in skipped:
+    if len(skipped_no_update) > 0:
+        print("The following spoltights already existed and were not updated:")
+        for name in skipped_no_update:
+            print("  %s" % name)
+    if len(skipped_errors) > 0:
+        print("The following spotlights were skipped because there were errors:")
+        for name, reason in skipped_errors:
             print("  %s: %s" % (name, reason))
     if len(MISSING_LOGOS) > 0:
         print("There were logos missing of the following organisations:")
@@ -587,8 +642,35 @@ async def main():
             print("  %s" % org)
 
 
+def init_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Migrate Software spotlights from hifis.net to the RSD.",
+        usage="%(prog)s [OPTION]"
+    )
+    parser.add_argument(
+        "-d", "--delete_all",
+        action="store_true",
+        help="Delete all spotlights and overwrite with current versions."
+    )
+    parser.add_argument(
+        "-i", "--update_imprint",
+        action="store_true",
+        help="Update imprint if it already exists."
+    )
+    parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Increase verbosity."
+    )
+    return parser
+
+
 if __name__ == "__main__":
-    if DEBUG:
+    mdparser = init_parser()
+    args = mdparser.parse_args()
+    DELETE_SPOTLIGHTS = args.delete_all
+    UPDATE_IMPRINT = args.update_imprint
+    if args.verbose:
         logging.basicConfig(level=logging.INFO)
     else:
         logging.basicConfig(level=logging.WARN)

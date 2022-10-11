@@ -600,6 +600,7 @@ async def main():
     check_env()
     token = jwt.encode(JWT_PAYLOAD, PGRST_JWT_SECRET, algorithm=JWT_ALGORITHM)
     spotlights = get_spotlights()
+    created_spotlights = []
     skipped_errors = []
     skipped_no_update = []
 
@@ -627,7 +628,14 @@ async def main():
             await add_keywords(client, spot)
             await add_research_field(client, spot)
             await add_organisations(client, spot)
+            created_spotlights.append(spot.get("name"))
 
+    if len(created_spotlights) == 0:
+        print("No new spotlights created.")
+    else:
+        print("The following spotlights were created:")
+        for name in created_spotlights:
+            print("  %s" % name)
     if len(skipped_no_update) > 0:
         print("The following spoltights already existed and were not updated:")
         for name in skipped_no_update:

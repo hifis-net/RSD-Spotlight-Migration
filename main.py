@@ -44,6 +44,8 @@ ORGANISATION_LOGOS = {
     "Helmholtz Centre for Heavy Ion Research (GSI)": "GSI.svg",
     "Helmholtz Centre For Ocean Research Kiel (GEOMAR)": "GEOMAR.jpg",
     "Helmholtz-Zentrum Dresden-Rossendorf": "HZDR.png",
+    "Forschungszentrum Jülich": "FZJ.svg",
+    "Deutsches Elektronen-Synchrotron DESY": "DESY.svg"
 }
 MISSING_LOGOS = []
 

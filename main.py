@@ -43,7 +43,7 @@ ORGANISATION_LOGOS = {
     "CISPA Helmholtz Center for Information Security": "CISPA.png",
     "Helmholtz Centre for Heavy Ion Research (GSI)": "GSI.svg",
     "Helmholtz Centre For Ocean Research Kiel (GEOMAR)": "GEOMAR.jpg",
-    "Helmholtz-Zentrum Dresden-Rossendorf (HZDR)": "HZDR.png",
+    "Helmholtz-Zentrum Dresden-Rossendorf": "HZDR.png",
 }
 MISSING_LOGOS = []
 

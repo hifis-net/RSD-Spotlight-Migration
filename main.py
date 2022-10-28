@@ -34,18 +34,51 @@ JWT_PAYLOAD = {"role": "rsd_admin"}
 JWT_ALGORITHM = "HS256"
 SPOTLIGHTS_DIR = "hifis.net/_spotlights"
 
-ORGANISATION_LOGOS = {
-    "Helmholtz Centre for Environmental Research (UFZ)": "UFZ.svg",
-    "Helmholtz Centre Potsdam GFZ German Research Centre for Geosciences": "GFZ.svg",
-    "German Aerospace Center (DLR)": "DLR.svg",
-    "Alfred Wegener Institute for Polar and Marine Research (AWI)": "AWI.svg",
-    "Karlsruhe Institute of Technology (KIT)": "KIT.svg",
-    "CISPA Helmholtz Center for Information Security": "CISPA.png",
-    "Helmholtz Centre for Heavy Ion Research (GSI)": "GSI.svg",
-    "Helmholtz Centre For Ocean Research Kiel (GEOMAR)": "GEOMAR.jpg",
-    "Helmholtz-Zentrum Dresden-Rossendorf": "HZDR.png",
-    "Forschungszentrum Jülich": "FZJ.svg",
-    "Deutsches Elektronen-Synchrotron DESY": "DESY.svg",
+ORGANISATIONS = {
+    "Helmholtz Centre for Environmental Research (UFZ)": {
+        "logo": "UFZ.svg",
+        "ror":"000h6jb29",
+    },
+    "Helmholtz Centre Potsdam GFZ German Research Centre for Geosciences":  {
+        "logo": "GFZ.svg",
+        "ror":"04z8jg394",
+    },
+    "German Aerospace Center (DLR)":  {
+        "logo": "DLR.svg",
+        "ror":"04bwf3e34",
+    },
+    "Alfred Wegener Institute for Polar and Marine Research (AWI)":  {
+        "logo": "AWI.svg",
+        "ror":"032e6b942",
+    },
+    "Karlsruhe Institute of Technology (KIT)":  {
+        "logo": "KIT.svg",
+        "ror":"04t3en479",
+    },
+    "CISPA Helmholtz Center for Information Security":  {
+        "logo": "CISPA.png",
+        "ror":"02njgxr09",
+    },
+    "Helmholtz Centre for Heavy Ion Research (GSI)":  {
+        "logo": "GSI.svg",
+        "ror":"02k8cbn47",
+    },
+    "Helmholtz Centre For Ocean Research Kiel (GEOMAR)":  {
+        "logo": "GEOMAR.jpg",
+        "ror":"02h2x0161",
+    },
+    "Helmholtz-Zentrum Dresden-Rossendorf":  {
+        "logo": "HZDR.png",
+        "ror":"01zy2cs03",
+    },
+    "Forschungszentrum Jülich":  {
+        "logo": "FZJ.svg",
+        "ror":"02nv7yv05",
+    },
+    "Deutsches Elektronen-Synchrotron DESY":  {
+        "logo": "DESY.svg",
+        "ror": "01js2sh04",
+    },
 }
 MISSING_LOGOS = []
 
@@ -456,10 +489,17 @@ async def add_organisations(client, spotlight):
             logging.info("Adding organisation %s" % org)
 
             org_slug = org_name_to_slug(org)
+            ror_id = "https://ror.org/%s" % ORGANISATIONS.get(org).get("ror") or None
+            if ror_id is None or ror_id == "https://ror.org/" :
+                logging.warn("Could not find ROR Id for: %s" % org)
 
             res = (
                 await client.from_("organisation")
-                .insert({"name": org, "slug": org_slug})
+                .insert({
+                    "name": org,
+                    "slug": org_slug,
+                    "ror_id": ror_id
+                })
                 .execute()
             )
 
@@ -468,7 +508,8 @@ async def add_organisations(client, spotlight):
             org_id = await get_id_for_organisation(client, org)
 
         logo_exists = await organisation_has_logo(client, org)
-        if not logo_exists and not org in ORGANISATION_LOGOS.keys():
+        logo_available = org in ORGANISATIONS.keys() and "logo" in ORGANISATIONS.get(org).keys()
+        if not logo_exists and not logo_available:
             logging.warn("No logo found for %s" % org)
             MISSING_LOGOS.append(org)
         elif not logo_exists:
@@ -479,7 +520,7 @@ async def add_organisations(client, spotlight):
                 .execute()
             )
             if len(logo_db.data) == 0:
-                logo_filename = f"./resources/logos/{ORGANISATION_LOGOS[org]}"
+                logo_filename = f"./resources/logos/{ORGANISATIONS[org]['logo']}"
                 logging.info("Adding logo %s" % logo_filename)
                 with open(logo_filename, "rb") as logo:
                     logo_base64 = base64.b64encode(logo.read()).decode("utf-8")

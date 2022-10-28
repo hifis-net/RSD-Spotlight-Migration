@@ -45,7 +45,7 @@ ORGANISATION_LOGOS = {
     "Helmholtz Centre For Ocean Research Kiel (GEOMAR)": "GEOMAR.jpg",
     "Helmholtz-Zentrum Dresden-Rossendorf": "HZDR.png",
     "Forschungszentrum Jülich": "FZJ.svg",
-    "Deutsches Elektronen-Synchrotron DESY": "DESY.svg"
+    "Deutsches Elektronen-Synchrotron DESY": "DESY.svg",
 }
 MISSING_LOGOS = []
 
@@ -76,9 +76,7 @@ def get_md_without_front_matter(file):
     # Now split by code blocks
     md_split = md_parsed.split(r"```")
     if len(md_split) % 2 == 0:
-        raise Exception(
-            "There was an error parsing markdown code blocks in %s" % file
-        )
+        raise Exception("There was an error parsing markdown code blocks in %s" % file)
 
     # Remove line breaks inside paragraphs, because they would be rendered as <br>
     # Only every scond block, because we do not want to replace newlines in code blocks
@@ -124,18 +122,20 @@ def name_to_slug(name):
 
 
 def org_name_to_slug(name):
-    name = name.replace(" ", "-").replace("ä", "a").replace("ö", "o").replace("ü", "u").replace("ß", "ss").lower()
-    name = ''.join(char for char in name if (char.isalnum() or char == "-"))
+    name = (
+        name.replace(" ", "-")
+        .replace("ä", "a")
+        .replace("ö", "o")
+        .replace("ü", "u")
+        .replace("ß", "ss")
+        .lower()
+    )
+    name = "".join(char for char in name if (char.isalnum() or char == "-"))
     return name
 
 
 async def slug_to_id(client, slug):
-    res = (
-        await client.from_("software")
-        .select("id", "slug")
-        .eq("slug", slug)
-        .execute()
-    )
+    res = await client.from_("software").select("id", "slug").eq("slug", slug).execute()
 
     if len(res.data) > 0:
         return res.data[0].get("id")
@@ -164,8 +164,7 @@ def convert_spotlight_to_software(spotlight):
 
     if type(doi) == list:
         logging.warning(
-            "Multiple DOIs are not supported. "
-            "Consider adding %s as a project.",
+            "Multiple DOIs are not supported. " "Consider adding %s as a project.",
             name,
         )
     elif not doi.startswith("10."):
@@ -216,10 +215,7 @@ async def remove_spotlight(client, spotlight):
             )
 
         res = (
-            await client.from_("release")
-            .delete()
-            .eq("software", software_id)
-            .execute()
+            await client.from_("release").delete().eq("software", software_id).execute()
         )
 
         res = (
@@ -395,11 +391,7 @@ async def add_keywords(client, spotlight):
         if kw_id is None:
             logging.info("Adding keyword %s" % keyword)
 
-            res = (
-                await client.from_("keyword")
-                .insert({"value": keyword})
-                .execute()
-            )
+            res = await client.from_("keyword").insert({"value": keyword}).execute()
 
             logging.info(res.data)
 
@@ -533,11 +525,7 @@ async def add_research_field(client, spotlight):
     if kw_id is None:
         logging.info("Adding research field %s" % research_field)
 
-        res = (
-            await client.from_("keyword")
-            .insert({"value": research_field})
-            .execute()
-        )
+        res = await client.from_("keyword").insert({"value": research_field}).execute()
 
         logging.info(res.data)
 
@@ -566,10 +554,7 @@ async def process_imprint(client):
         }
 
         db_imprint = (
-            await client.from_("meta_pages")
-            .select("*")
-            .eq("slug", "imprint")
-            .execute()
+            await client.from_("meta_pages").select("*").eq("slug", "imprint").execute()
         )
 
         if len(db_imprint.data) > 0 and not UPDATE_IMPRINT:
@@ -595,7 +580,6 @@ def check_env():
     if errors > 0:
         raise RuntimeError("Environment variables are missing.")
     logging.info("Runtime variables checked.")
-
 
 
 async def main():
@@ -655,22 +639,22 @@ async def main():
 def init_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Migrate Software spotlights from hifis.net to the RSD.",
-        usage="%(prog)s [OPTION]"
+        usage="%(prog)s [OPTION]",
     )
     parser.add_argument(
-        "-d", "--delete_all",
+        "-d",
+        "--delete_all",
         action="store_true",
-        help="Delete all spotlights and overwrite with current versions."
+        help="Delete all spotlights and overwrite with current versions.",
     )
     parser.add_argument(
-        "-i", "--update_imprint",
+        "-i",
+        "--update_imprint",
         action="store_true",
-        help="Update imprint if it already exists."
+        help="Update imprint if it already exists.",
     )
     parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Increase verbosity."
+        "-v", "--verbose", action="store_true", help="Increase verbosity."
     )
     return parser
 

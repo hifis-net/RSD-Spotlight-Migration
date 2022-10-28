@@ -6,7 +6,6 @@
 # https://gitlab.hzdr.de/hub-terra/stakeholder-view/-/blob/dev/datahub/stakeholderview/migrations/0015_html_to_md.py
 
 from html.parser import HTMLParser
-from tkinter import Image
 from typing import List
 
 
@@ -156,15 +155,9 @@ class SvHtmlParser(HTMLParser):
             else:
                 self.inside_italic = True
                 self.output.append(r"*")
-        elif (
-            tag == "iframe"
-            or tag == "centered"
-            or tag == "center"
-            or tag == "video"
-        ):
+        elif tag == "iframe" or tag == "centered" or tag == "center" or tag == "video":
             return
         else:
             raise NotImplementedError(
-                f"{tag} tags are not implemented.\n\n"
-                f"Last output: {self.output[-1]}"
+                f"{tag} tags are not implemented.\n\n" f"Last output: {self.output[-1]}"
             )

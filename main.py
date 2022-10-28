@@ -34,18 +34,51 @@ JWT_PAYLOAD = {"role": "rsd_admin"}
 JWT_ALGORITHM = "HS256"
 SPOTLIGHTS_DIR = "hifis.net/_spotlights"
 
-ORGANISATION_LOGOS = {
-    "Helmholtz Centre for Environmental Research (UFZ)": "UFZ.svg",
-    "Helmholtz Centre Potsdam GFZ German Research Centre for Geosciences": "GFZ.svg",
-    "German Aerospace Center (DLR)": "DLR.svg",
-    "Alfred Wegener Institute for Polar and Marine Research (AWI)": "AWI.svg",
-    "Karlsruhe Institute of Technology (KIT)": "KIT.svg",
-    "CISPA Helmholtz Center for Information Security": "CISPA.png",
-    "Helmholtz Centre for Heavy Ion Research (GSI)": "GSI.svg",
-    "Helmholtz Centre For Ocean Research Kiel (GEOMAR)": "GEOMAR.jpg",
-    "Helmholtz-Zentrum Dresden-Rossendorf": "HZDR.png",
-    "Forschungszentrum Jülich": "FZJ.svg",
-    "Deutsches Elektronen-Synchrotron DESY": "DESY.svg"
+ORGANISATIONS = {
+    "Helmholtz Centre for Environmental Research (UFZ)": {
+        "logo": "UFZ.svg",
+        "ror":"000h6jb29",
+    },
+    "Helmholtz Centre Potsdam GFZ German Research Centre for Geosciences":  {
+        "logo": "GFZ.svg",
+        "ror":"04z8jg394",
+    },
+    "German Aerospace Center (DLR)":  {
+        "logo": "DLR.svg",
+        "ror":"04bwf3e34",
+    },
+    "Alfred Wegener Institute for Polar and Marine Research (AWI)":  {
+        "logo": "AWI.svg",
+        "ror":"032e6b942",
+    },
+    "Karlsruhe Institute of Technology (KIT)":  {
+        "logo": "KIT.svg",
+        "ror":"04t3en479",
+    },
+    "CISPA Helmholtz Center for Information Security":  {
+        "logo": "CISPA.png",
+        "ror":"02njgxr09",
+    },
+    "Helmholtz Centre for Heavy Ion Research (GSI)":  {
+        "logo": "GSI.svg",
+        "ror":"02k8cbn47",
+    },
+    "Helmholtz Centre For Ocean Research Kiel (GEOMAR)":  {
+        "logo": "GEOMAR.jpg",
+        "ror":"02h2x0161",
+    },
+    "Helmholtz-Zentrum Dresden-Rossendorf":  {
+        "logo": "HZDR.png",
+        "ror":"01zy2cs03",
+    },
+    "Forschungszentrum Jülich":  {
+        "logo": "FZJ.svg",
+        "ror":"02nv7yv05",
+    },
+    "Deutsches Elektronen-Synchrotron DESY":  {
+        "logo": "DESY.svg",
+        "ror": "01js2sh04",
+    },
 }
 MISSING_LOGOS = []
 
@@ -76,9 +109,7 @@ def get_md_without_front_matter(file):
     # Now split by code blocks
     md_split = md_parsed.split(r"```")
     if len(md_split) % 2 == 0:
-        raise Exception(
-            "There was an error parsing markdown code blocks in %s" % file
-        )
+        raise Exception("There was an error parsing markdown code blocks in %s" % file)
 
     # Remove line breaks inside paragraphs, because they would be rendered as <br>
     # Only every scond block, because we do not want to replace newlines in code blocks
@@ -124,18 +155,20 @@ def name_to_slug(name):
 
 
 def org_name_to_slug(name):
-    name = name.replace(" ", "-").replace("ä", "a").replace("ö", "o").replace("ü", "u").replace("ß", "ss").lower()
-    name = ''.join(char for char in name if (char.isalnum() or char == "-"))
+    name = (
+        name.replace(" ", "-")
+        .replace("ä", "a")
+        .replace("ö", "o")
+        .replace("ü", "u")
+        .replace("ß", "ss")
+        .lower()
+    )
+    name = "".join(char for char in name if (char.isalnum() or char == "-"))
     return name
 
 
 async def slug_to_id(client, slug):
-    res = (
-        await client.from_("software")
-        .select("id", "slug")
-        .eq("slug", slug)
-        .execute()
-    )
+    res = await client.from_("software").select("id", "slug").eq("slug", slug).execute()
 
     if len(res.data) > 0:
         return res.data[0].get("id")
@@ -164,8 +197,7 @@ def convert_spotlight_to_software(spotlight):
 
     if type(doi) == list:
         logging.warning(
-            "Multiple DOIs are not supported. "
-            "Consider adding %s as a project.",
+            "Multiple DOIs are not supported. " "Consider adding %s as a project.",
             name,
         )
     elif not doi.startswith("10."):
@@ -216,10 +248,7 @@ async def remove_spotlight(client, spotlight):
             )
 
         res = (
-            await client.from_("release")
-            .delete()
-            .eq("software", software_id)
-            .execute()
+            await client.from_("release").delete().eq("software", software_id).execute()
         )
 
         res = (
@@ -395,11 +424,7 @@ async def add_keywords(client, spotlight):
         if kw_id is None:
             logging.info("Adding keyword %s" % keyword)
 
-            res = (
-                await client.from_("keyword")
-                .insert({"value": keyword})
-                .execute()
-            )
+            res = await client.from_("keyword").insert({"value": keyword}).execute()
 
             logging.info(res.data)
 
@@ -464,10 +489,17 @@ async def add_organisations(client, spotlight):
             logging.info("Adding organisation %s" % org)
 
             org_slug = org_name_to_slug(org)
+            ror_id = "https://ror.org/%s" % ORGANISATIONS.get(org).get("ror") or None
+            if ror_id is None or ror_id == "https://ror.org/" :
+                logging.warn("Could not find ROR Id for: %s" % org)
 
             res = (
                 await client.from_("organisation")
-                .insert({"name": org, "slug": org_slug})
+                .insert({
+                    "name": org,
+                    "slug": org_slug,
+                    "ror_id": ror_id
+                })
                 .execute()
             )
 
@@ -476,7 +508,8 @@ async def add_organisations(client, spotlight):
             org_id = await get_id_for_organisation(client, org)
 
         logo_exists = await organisation_has_logo(client, org)
-        if not logo_exists and not org in ORGANISATION_LOGOS.keys():
+        logo_available = org in ORGANISATIONS.keys() and "logo" in ORGANISATIONS.get(org).keys()
+        if not logo_exists and not logo_available:
             logging.warn("No logo found for %s" % org)
             MISSING_LOGOS.append(org)
         elif not logo_exists:
@@ -487,7 +520,7 @@ async def add_organisations(client, spotlight):
                 .execute()
             )
             if len(logo_db.data) == 0:
-                logo_filename = f"./resources/logos/{ORGANISATION_LOGOS[org]}"
+                logo_filename = f"./resources/logos/{ORGANISATIONS[org]['logo']}"
                 logging.info("Adding logo %s" % logo_filename)
                 with open(logo_filename, "rb") as logo:
                     logo_base64 = base64.b64encode(logo.read()).decode("utf-8")
@@ -533,11 +566,7 @@ async def add_research_field(client, spotlight):
     if kw_id is None:
         logging.info("Adding research field %s" % research_field)
 
-        res = (
-            await client.from_("keyword")
-            .insert({"value": research_field})
-            .execute()
-        )
+        res = await client.from_("keyword").insert({"value": research_field}).execute()
 
         logging.info(res.data)
 
@@ -566,10 +595,7 @@ async def process_imprint(client):
         }
 
         db_imprint = (
-            await client.from_("meta_pages")
-            .select("*")
-            .eq("slug", "imprint")
-            .execute()
+            await client.from_("meta_pages").select("*").eq("slug", "imprint").execute()
         )
 
         if len(db_imprint.data) > 0 and not UPDATE_IMPRINT:
@@ -595,7 +621,6 @@ def check_env():
     if errors > 0:
         raise RuntimeError("Environment variables are missing.")
     logging.info("Runtime variables checked.")
-
 
 
 async def main():
@@ -655,22 +680,22 @@ async def main():
 def init_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Migrate Software spotlights from hifis.net to the RSD.",
-        usage="%(prog)s [OPTION]"
+        usage="%(prog)s [OPTION]",
     )
     parser.add_argument(
-        "-d", "--delete_all",
+        "-d",
+        "--delete_all",
         action="store_true",
-        help="Delete all spotlights and overwrite with current versions."
+        help="Delete all spotlights and overwrite with current versions.",
     )
     parser.add_argument(
-        "-i", "--update_imprint",
+        "-i",
+        "--update_imprint",
         action="store_true",
-        help="Update imprint if it already exists."
+        help="Update imprint if it already exists.",
     )
     parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Increase verbosity."
+        "-v", "--verbose", action="store_true", help="Increase verbosity."
     )
     return parser
 

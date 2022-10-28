@@ -13,9 +13,9 @@ COPY . .
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get upgrade -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y wget && \
+    rm -rf /var/lib/apt/lists/* && \
     pip3 install poetry && \
-    poetry install && \
-    wget "https://raw.githubusercontent.com/eficode/wait-for/v2.2.3/wait-for" -O wait-for.sh && \
-    chmod +x wait-for.sh
+    poetry install
 
 CMD [ "/opt/spotlight-migration/start.sh" ]

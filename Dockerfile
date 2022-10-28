@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-FROM python:3.9-bullseye
+FROM python:3.9-slim-bullseye
 
 ENV POSTGREST_URL "http://localhost/api/v1"
 ENV PGRST_JWT_SECRET "123"

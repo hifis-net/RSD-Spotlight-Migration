@@ -4,4 +4,4 @@
 
 [submodule "hifis.net"]
 	path = hifis.net
-	url = https://gitlab.hzdr.de/hifis/overall/hifis.net.git
+	url = https://codebase.helmholtz.cloud/hifis/overall/hifis.net.git

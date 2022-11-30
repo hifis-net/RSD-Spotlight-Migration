@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 # HTML Parser from
-# https://gitlab.hzdr.de/hub-terra/stakeholder-view/-/blob/dev/datahub/stakeholderview/migrations/0015_html_to_md.py
+# https://codebase.helmholtz.cloud/hub-terra/stakeholder-view/-/blob/dev/datahub/stakeholderview/migrations/0015_html_to_md.py
 
 from html.parser import HTMLParser
 from typing import List

@@ -456,12 +456,12 @@ async def get_id_for_organisation(client, org):
 async def organisation_has_logo(client, org) -> bool:
     org_id = await get_id_for_organisation(client, org)
     res = (
-        await client.from_("logo_for_organisation")
-        .select("organisation")
-        .eq("organisation", org_id)
+        await client.from_("organisation")
+        .select("id", "logo_id")
+        .eq("id", org_id)
         .execute()
     )
-    if len(res.data) > 0:
+    if len(res.data) == 1 and res.data[0]['logo_id'] is not None:
         return True
     else:
         return False
@@ -493,13 +493,13 @@ async def add_organisations(client, spotlight):
             if ror_id is None or ror_id == "https://ror.org/":
                 logging.warn("Could not find ROR Id for: %s" % org)
 
-            res = (
+            res_img = (
                 await client.from_("organisation")
                 .insert({"name": org, "slug": org_slug, "ror_id": ror_id})
                 .execute()
             )
 
-            logging.info(res.data)
+            logging.info(res_img.data)
 
             org_id = await get_id_for_organisation(client, org)
 
@@ -511,39 +511,41 @@ async def add_organisations(client, spotlight):
             logging.warn("No logo found for %s" % org)
             MISSING_LOGOS.append(org)
         elif not logo_exists:
-            logo_db = (
-                await client.from_("logo_for_organisation")
-                .select("*")
-                .eq("organisation", org_id)
+            logo_filename = f"./resources/logos/{ORGANISATIONS[org]['logo']}"
+            logging.info("Adding logo %s" % logo_filename)
+            with open(logo_filename, "rb") as logo:
+                logo_base64 = base64.b64encode(logo.read()).decode("utf-8")
+                mime_type = mime.from_file(logo_filename)
+                logo_data = {
+                    "data": logo_base64,
+                    "mime_type": mime_type,
+                }
+                res_img = (
+                    await client.from_("image")
+                    .insert(logo_data)
+                    .execute()
+                )
+                logging.info(res_img.data)
+                logo_id = res_img.data[0]['id']
+                logging.info("Uploaded logo %s" % logo_filename)
+            res_org = (
+                await client.from_("organisation")
+                .update({"logo_id": logo_id})
+                .eq("id", org_id)
                 .execute()
             )
-            if len(logo_db.data) == 0:
-                logo_filename = f"./resources/logos/{ORGANISATIONS[org]['logo']}"
-                logging.info("Adding logo %s" % logo_filename)
-                with open(logo_filename, "rb") as logo:
-                    logo_base64 = base64.b64encode(logo.read()).decode("utf-8")
-                    mime_type = mime.from_file(logo_filename)
-                    logo_data = {
-                        "organisation": org_id,
-                        "data": logo_base64,
-                        "mime_type": mime_type,
-                    }
-                    res = (
-                        await client.from_("logo_for_organisation")
-                        .insert(logo_data)
-                        .execute()
-                    )
-                    logging.info(res.data)
+            logging.info("Added logo %s to organisation %s" % {logo_id, org_id})
+            logging.info(res_org.data)
 
         logging.info("Adding organisation %s to software %s" % (org, name))
 
-        res = (
+        res_img = (
             await client.from_("software_for_organisation")
             .insert({"software": software_id, "organisation": org_id})
             .execute()
         )
 
-        logging.info(res.data)
+        logging.info(res_img.data)
 
 
 async def add_research_field(client, spotlight):

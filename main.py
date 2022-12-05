@@ -534,7 +534,7 @@ async def add_organisations(client, spotlight):
                 .eq("id", org_id)
                 .execute()
             )
-            logging.info("Added logo %s to organisation %s" % {logo_id, org_id})
+            logging.info("Added logo %s to organisation %s" % (logo_id, org_id))
             logging.info(res_org.data)
 
         logging.info("Adding organisation %s to software %s" % (org, name))

@@ -457,8 +457,21 @@ async def get_id_for_organisation(client, org):
     return None
 
 
-async def organisation_has_logo(client, org) -> bool:
-    org_id = await get_id_for_organisation(client, org)
+async def get_organisation_id_by_ror(client, ror):
+    res = (
+        await client.from_("organisation")
+        .select("id", "ror_id")
+        .eq("ror_id", f"https://ror.org/{ror}")
+        .execute()
+    )
+
+    if len(res.data) > 0:
+        return res.data[0].get("id")
+
+    return None
+
+
+async def organisation_has_logo(client, org_id) -> bool:
     res = (
         await client.from_("organisation")
         .select("id", "logo_id")
@@ -487,7 +500,7 @@ async def add_organisations(client, spotlight):
     logging.info("Add organisations for %s", name)
 
     for org in orgs:
-        org_id = await get_id_for_organisation(client, org)
+        org_id = await get_organisation_id_by_ror(client, ORGANISATIONS.get(org).get("ror"))
 
         if org_id is None:
             logging.info("Adding organisation %s" % org)
@@ -507,7 +520,7 @@ async def add_organisations(client, spotlight):
 
             org_id = await get_id_for_organisation(client, org)
 
-        logo_exists = await organisation_has_logo(client, org)
+        logo_exists = await organisation_has_logo(client, org_id)
         logo_available = (
             org in ORGANISATIONS.keys() and "logo" in ORGANISATIONS.get(org).keys()
         )

@@ -79,6 +79,10 @@ ORGANISATIONS = {
         "logo": "DESY.svg",
         "ror": "01js2sh04",
     },
+    "German Cancer Research Center (DKFZ)": {
+        "logo": "dkfz.svg",
+        "ror": "04cdgtt98"
+    }
 }
 MISSING_LOGOS = []
 

@@ -119,7 +119,7 @@ def get_md_without_front_matter(file):
     # Only every scond block, because we do not want to replace newlines in code blocks
     for i in range(0, len(md_split), 2):
         md_split[i] = re.sub(
-            r"(?<=[\w., \(\)\[\]])(\n)(?=[\w., \(\)\[\]])", " ", md_split[i]
+            r"(?<=[\w., \(\)\[\]])(\n)(?=[\w.,\(\)\[\]])", " ", md_split[i]
         )
 
     return "```".join(md_split)

@@ -20,7 +20,7 @@ import yaml
 import jwt
 
 import asyncio
-from postgrest import AsyncPostgrestClient
+from postgrest import APIError, AsyncPostgrestClient
 
 from mdparser.mdparser import SvHtmlParser
 
@@ -236,12 +236,15 @@ async def remove_spotlight(client, spotlight):
             .execute()
         )
 
-        res = (
-            await client.from_("release")
-            .select("id")
-            .eq("software", software_id)
-            .execute()
-        )
+        try:
+            res = (
+                await client.from_("release")
+                .select("id")
+                .eq("software", software_id)
+                .execute()
+            )
+        except APIError as exc:
+            logging.info("Catch exception: %s", exc)
 
         for rel in res.data:
             res = (

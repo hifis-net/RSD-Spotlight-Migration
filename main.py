@@ -150,10 +150,18 @@ def get_spotlights():
 
 
 def name_to_slug(name):
-    remove_chars = name.replace(" ", "-").replace("+", "").lower()
+    remove_chars = name.lower()
 
-    # remove multiple '-'
-    return re.sub(r"\-+", "-", remove_chars)
+    replacements = [
+        (r"\s+", "-"),  # replace whitespaces
+        (r"[^A-Za-z0-9_ ]+", ""),  # remove non-alphanumeric chars
+        (r"\-+", "-"),  # remove multiple '-'
+    ]
+
+    for pattern, replace in replacements:
+        remove_chars = re.sub(pattern, replace, remove_chars)
+
+    return remove_chars
 
 
 def org_name_to_slug(name):

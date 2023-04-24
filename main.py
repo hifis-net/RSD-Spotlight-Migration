@@ -9,21 +9,19 @@ Migration script for the spotlights from the hifis.net website.
 """
 
 import argparse
-import os
-import re
+import asyncio
+import base64
 import glob
 import logging
-import base64
-import magic
+import os
+import re
 
-import yaml
 import jwt
-
-import asyncio
+import magic
+import yaml
 from postgrest import APIError, AsyncPostgrestClient
 
 from mdparser.mdparser import SvHtmlParser
-
 
 VERBOSE = False
 DELETE_SPOTLIGHTS = False

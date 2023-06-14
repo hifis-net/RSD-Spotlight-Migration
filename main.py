@@ -9,21 +9,19 @@ Migration script for the spotlights from the hifis.net website.
 """
 
 import argparse
-import os
-import re
+import asyncio
+import base64
 import glob
 import logging
-import base64
-import magic
+import os
+import re
 
-import yaml
 import jwt
-
-import asyncio
+import magic
+import yaml
 from postgrest import APIError, AsyncPostgrestClient
 
 from mdparser.mdparser import SvHtmlParser
-
 
 VERBOSE = False
 DELETE_SPOTLIGHTS = False
@@ -81,8 +79,8 @@ ORGANISATIONS = {
     },
     "German Cancer Research Center (DKFZ)": {
         "logo": "dkfz.svg",
-        "ror": "04cdgtt98"
-    }
+        "ror": "04cdgtt98",
+    },
 }
 MISSING_LOGOS = []
 
@@ -481,7 +479,7 @@ async def organisation_has_logo(client, org_id) -> bool:
         .eq("id", org_id)
         .execute()
     )
-    if len(res.data) == 1 and res.data[0]['logo_id'] is not None:
+    if len(res.data) == 1 and res.data[0]["logo_id"] is not None:
         return True
     else:
         return False
@@ -503,7 +501,9 @@ async def add_organisations(client, spotlight):
     logging.info("Add organisations for %s", name)
 
     for org in orgs:
-        org_id = await get_organisation_id_by_ror(client, ORGANISATIONS.get(org).get("ror"))
+        org_id = await get_organisation_id_by_ror(
+            client, ORGANISATIONS.get(org).get("ror")
+        )
 
         if org_id is None:
             logging.info("Adding organisation %s" % org)
@@ -540,13 +540,9 @@ async def add_organisations(client, spotlight):
                     "data": logo_base64,
                     "mime_type": mime_type,
                 }
-                res_img = (
-                    await client.from_("image")
-                    .insert(logo_data)
-                    .execute()
-                )
+                res_img = await client.from_("image").insert(logo_data).execute()
                 logging.info(res_img.data)
-                logo_id = res_img.data[0]['id']
+                logo_id = res_img.data[0]["id"]
                 logging.info("Uploaded logo %s" % logo_filename)
             res_org = (
                 await client.from_("organisation")

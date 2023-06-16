@@ -30,7 +30,7 @@ POSTGREST_URL = os.environ.get("POSTGREST_URL")
 PGRST_JWT_SECRET = os.environ.get("PGRST_JWT_SECRET")
 JWT_PAYLOAD = {"role": "rsd_admin"}
 JWT_ALGORITHM = "HS256"
-SPOTLIGHTS_DIR = "hifis.net/_spotlights"
+SPOTLIGHTS_DIR = "software-descriptions/software/rendered"
 
 ORGANISATIONS = {
     "Helmholtz Centre for Environmental Research (UFZ)": {

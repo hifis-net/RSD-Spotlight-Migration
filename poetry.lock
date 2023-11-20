@@ -419,19 +419,20 @@ test = ["appdirs (==1.4.4)", "pytest (>=6)", "pytest-cov (>=2.7)", "pytest-mock 
 
 [[package]]
 name = "postgrest-py"
-version = "0.10.3"
+version = "0.10.6"
 description = "PostgREST client for Python. This library provides an ORM interface to PostgREST."
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = ">=3.8,<4.0"
 files = [
-    {file = "postgrest-py-0.10.3.tar.gz", hash = "sha256:533faefd4e231200478dcaabf97c2523b567d6977fa77f19338ff97e5663fda3"},
-    {file = "postgrest_py-0.10.3-py3-none-any.whl", hash = "sha256:fe0033c28551822e9d4561dee1cb232da2029f36b432b7797c64eda5fadbefb1"},
+    {file = "postgrest_py-0.10.6-py3-none-any.whl", hash = "sha256:434acf3a3eeb196a575e6a4db65072222ca6d60d665cf9a1f4c4a84489b47a44"},
+    {file = "postgrest_py-0.10.6.tar.gz", hash = "sha256:106adc046546165798e4a380585f66bbf1bbcdcbbe094abbea7aaabfef37f2d1"},
 ]
 
 [package.dependencies]
 deprecation = ">=2.1.0,<3.0.0"
 httpx = ">=0.23.0,<0.24.0"
 pydantic = ">=1.9.0,<2.0.0"
+strenum = ">=0.4.9,<0.5.0"
 
 [[package]]
 name = "prompt-toolkit"
@@ -690,6 +691,22 @@ pure-eval = "*"
 tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
+name = "strenum"
+version = "0.4.15"
+description = "An Enum that inherits from str."
+optional = false
+python-versions = "*"
+files = [
+    {file = "StrEnum-0.4.15-py3-none-any.whl", hash = "sha256:a30cda4af7cc6b5bf52c8055bc4bf4b2b6b14a93b574626da33df53cf7740659"},
+    {file = "StrEnum-0.4.15.tar.gz", hash = "sha256:878fb5ab705442070e4dd1929bb5e2249511c0bcf2b0eeacf3bcd80875c82eff"},
+]
+
+[package.extras]
+docs = ["myst-parser[linkify]", "sphinx", "sphinx-rtd-theme"]
+release = ["twine"]
+test = ["pylint", "pytest", "pytest-black", "pytest-cov", "pytest-pylint"]
+
+[[package]]
 name = "toml"
 version = "0.10.2"
 description = "Python Library for Tom's Obvious, Minimal Language"
@@ -751,4 +768,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8, <3.11"
-content-hash = "dcd647cec8fa690bd2b277ccd97ba04508ca700f6af526628a95ea6285a1475d"
+content-hash = "60f7619a34206437beecee34731bfed1e66eda3febdbd37f03dfeb6c58b8aca9"

@@ -299,6 +299,13 @@ async def remove_spotlight(client, spotlight):
             .execute()
         )
 
+        res = (
+            await client.from_("software_highlight")
+            .delete()
+            .eq("software", software_id)
+            .execute()
+        )
+
     logging.info("Remove %s", name)
 
     res = await client.from_("software").delete().eq("slug", slug).execute()

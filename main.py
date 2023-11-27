@@ -664,7 +664,7 @@ async def main():
 
     async with AsyncPostgrestClient(POSTGREST_URL) as client:
         client.auth(token=token)
-        await process_imprint(client)
+        # await process_imprint(client)
 
         for spot in spotlights:
             # check if spotlight matches our criteria

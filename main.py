@@ -232,6 +232,7 @@ async def remove_spotlight(client, spotlight):
     name = spotlight.get("name")
     slug = name_to_slug(name)
     software_id = await slug_to_id(client, slug)
+    logging.info("Removing %s", name)
 
     if software_id is not None:
         # remove related entries
@@ -242,21 +243,18 @@ async def remove_spotlight(client, spotlight):
             .execute()
         )
 
-        try:
-            res = (
-                await client.from_("release")
-                .select("id")
-                .eq("software", software_id)
-                .execute()
-            )
-        except APIError as exc:
-            logging.info("Catch exception: %s", exc)
+        res = (
+            await client.from_("release")
+            .select("software")
+            .eq("software", software_id)
+            .execute()
+        )
 
         for rel in res.data:
             res = (
-                await client.from_("release_content")
+                await client.from_("release_version")
                 .delete()
-                .eq("release_id", rel.get("id"))
+                .eq("release_id", rel.get("software"))
                 .execute()
             )
 

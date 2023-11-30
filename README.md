@@ -1,24 +1,15 @@
 <!--
 SPDX-FileCopyrightText: 2022 Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences
+SPDX-FileCopyrightText: 2023 Helmholtz Centre for Environmental Research (UFZ)
 
 SPDX-License-Identifier: CC-BY-4.0
 -->
 
-# hifis.net Spotlight Migration for RSD
+# Software Spotlight Migration for RSD
 
 This repository provides a docker image to use in the RSD project to
-migrate the spotlights from hifis.net into the RSD database structure.
-
-We use Git submodules, so be sure to clone recursively or initialize the
-submodules after cloning:
-
-```bash
-git clone --recurse-submodules ...
-# or:
-git clone ...
-git submodule init
-git submodule update
-```
+migrate the spotlights from hifis.net or any other local source into
+the RSD database structure.
 
 ## Run locally
 
@@ -37,10 +28,13 @@ poetry install
 The tool supports some command line arguments:
 
 ```shell
-$ poetry run ./main.py --help
-usage: main.py [OPTION]
+$ poetry run ./main.py -h
+usage: main.py [OPTION] PATH
 
-Migrate Software spotlights from hifis.net to the RSD.
+Migrate Software spotlights from a local file path to the RSD.
+
+positional arguments:
+  PATH                  The file path where to find the spotlights.
 
 options:
   -h, --help            show this help message and exit
@@ -54,15 +48,15 @@ options:
 Define the required environment variables as specified in your RSD `frontend/.env.local`
 
 ```bash
-# define database endpoint and JWT secret
-export POSTGREST_URL=localhost:5432
+# define POSTGREST API endpoint and JWT secret
+export POSTGREST_URL=https://localhost/api/v1
 export PGRST_JWT_SECRET=abcdef
 
 # add spotlights to RSD database via PostgREST:
 poetry run ./main.py
 ```
 
-or import them directly from you `.env.local`:
+or import them directly from your `.env.local`:
 
 ```bash
 set -a

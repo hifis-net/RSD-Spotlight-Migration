@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-FileCopyrightText: 2022 Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences
+# SPDX-FileCopyrightText: 2023 Helmholtz Centre for Environmental Research (UFZ)
 #
 # SPDX-License-Identifier: EUPL-1.2
 

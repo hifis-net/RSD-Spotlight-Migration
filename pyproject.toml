@@ -5,11 +5,12 @@
 
 [tool.poetry]
 name = "RSD-Spotlights-Migration"
-version = "1.5.1"
+version = "2.0.0"
 description = "Initial data for the RSD deployment"
 authors = [
     "Matthias Rüster, GFZ <matthias.ruester@gfz-potsdam.de>",
     "Christian Meeßen, GFZ <christian.meessen@gfz-potsdam.de>",
+    "Norman Ziegner, UFZ <norman.ziegner@ufz.de>",
 ]
 package-mode = false
 

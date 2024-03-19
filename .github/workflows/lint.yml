@@ -1,13 +1,20 @@
-name: CI
+---
+name: "Lint"
+
 on:
   pull_request:
+    paths:
+      - "main.py"
+      - "mdparser/**"
+      - "poetry.lock"
+      - "pyproject.toml"
+      - ".github/workflows/lint.yml"
   push:
     branches:
       - "main"
     tags:
       - "v*.*.*"
-  schedule:
-    - cron: "0 0 * * *"
+
 env:
   PY_COLORS: 1
 

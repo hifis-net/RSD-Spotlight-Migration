@@ -1,14 +1,16 @@
 # SPDX-FileCopyrightText: 2022 Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences
+# SPDX-FileCopyrightText: 2023 Helmholtz Centre for Environmental Research (UFZ)
 #
 # SPDX-License-Identifier: CC0-1.0
 
 [tool.poetry]
 name = "RSD-Spotlights-Migration"
-version = "1.5.1"
+version = "2.0.0"
 description = "Initial data for the RSD deployment"
 authors = [
     "Matthias Rüster, GFZ <matthias.ruester@gfz-potsdam.de>",
     "Christian Meeßen, GFZ <christian.meessen@gfz-potsdam.de>",
+    "Norman Ziegner, UFZ <norman.ziegner@ufz.de>",
 ]
 package-mode = false
 

@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-FROM python:3.9-slim-bullseye
+FROM python:3.12-slim
 
 ENV POSTGREST_URL "http://localhost/api/v1"
 ENV PGRST_JWT_SECRET "123"
@@ -18,4 +18,5 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     pip3 install poetry && \
     poetry install
 
-CMD [ "/opt/spotlight-migration/start.sh" ]
+ENTRYPOINT [ "/opt/spotlight-migration/start.sh" ]
+CMD ["--help"]

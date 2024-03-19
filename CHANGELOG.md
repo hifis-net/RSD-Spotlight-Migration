@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased](https://github.com/hifis-net/RSD-Spotlight-Migration/tree/HEAD)
+## [v2.0.0](https://github.com/hifis-net/RSD-Spotlight-Migration/tree/v2.0.0) (2024-03-19)
 
-[Full Changelog](https://github.com/hifis-net/RSD-Spotlight-Migration/compare/v1.5.1...HEAD)
+[Full Changelog](https://github.com/hifis-net/RSD-Spotlight-Migration/compare/v1.5.1...v2.0.0)
 
 **Closed issues:**
 
@@ -15,6 +15,7 @@
 
 **Merged pull requests:**
 
+- Prepare release v2.0.0 [\#61](https://github.com/hifis-net/RSD-Spotlight-Migration/pull/61) ([Normo](https://github.com/Normo))
 - build\(deps-dev\): bump black from 23.11.0 to 24.3.0 [\#60](https://github.com/hifis-net/RSD-Spotlight-Migration/pull/60) ([dependabot[bot]](https://github.com/apps/dependabot))
 - build\(deps-dev\): bump isort from 5.12.0 to 5.13.2 [\#59](https://github.com/hifis-net/RSD-Spotlight-Migration/pull/59) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Update GitHub actions workflows [\#58](https://github.com/hifis-net/RSD-Spotlight-Migration/pull/58) ([Normo](https://github.com/Normo))

@@ -3,13 +3,14 @@
 # SPDX-License-Identifier: CC0-1.0
 
 [tool.poetry]
-name = "RSD-initial-data"
-version = "0.0.1"
+name = "RSD-Spotlights-Migration"
+version = "1.5.1"
 description = "Initial data for the RSD deployment"
 authors = [
     "Matthias Rüster, GFZ <matthias.ruester@gfz-potsdam.de>",
     "Christian Meeßen, GFZ <christian.meessen@gfz-potsdam.de>",
 ]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"

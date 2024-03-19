@@ -30,7 +30,6 @@ POSTGREST_URL = os.environ.get("POSTGREST_URL")
 PGRST_JWT_SECRET = os.environ.get("PGRST_JWT_SECRET")
 JWT_PAYLOAD = {"role": "rsd_admin"}
 JWT_ALGORITHM = "HS256"
-SPOTLIGHTS_DIR = "software-descriptions/software/rendered"
 
 ORGANISATIONS = {
     "Helmholtz Centre for Environmental Research (UFZ)": {
@@ -124,6 +123,10 @@ def get_md_without_front_matter(file):
 
 
 def get_spotlights():
+    if not os.path.exists(SPOTLIGHTS_DIR):
+        logging.error("Spotlights directory %s does not exist.", SPOTLIGHTS_DIR)
+        raise SystemExit("Can't find Spotlights.")
+
     files = glob.glob(SPOTLIGHTS_DIR + os.sep + "*.md")
     filtered = list(filter(lambda x: "_template.md" not in x, files))
 
@@ -708,8 +711,8 @@ async def main():
 
 def init_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Migrate Software spotlights from hifis.net to the RSD.",
-        usage="%(prog)s [OPTION]",
+        description="Migrate Software spotlights from a local file path to the RSD.",
+        usage="%(prog)s [OPTION] PATH",
     )
     parser.add_argument(
         "-d",
@@ -726,6 +729,7 @@ def init_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Increase verbosity."
     )
+    parser.add_argument("PATH", help="The file path where to find the spotlights.")
     return parser
 
 
@@ -734,6 +738,7 @@ if __name__ == "__main__":
     args = mdparser.parse_args()
     DELETE_SPOTLIGHTS = args.delete_all
     UPDATE_IMPRINT = args.update_imprint
+    SPOTLIGHTS_DIR = args.PATH
     if args.verbose:
         logging.basicConfig(level=logging.INFO)
     else:

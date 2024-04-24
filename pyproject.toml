@@ -23,5 +23,5 @@ python-magic = "^0.4.27"
 ipdb = "^0.13.13"
 
 [tool.poetry.dev-dependencies]
-black = "^24.3.0"
+black = "^24.4.1"
 isort = "^5.13.2"
